@@ -8,7 +8,7 @@ The MIT License (MIT)
 */
 // ==UserScript==
 // @name         Slither.io Bot
-// @version      3.0.6
+// @version      3.0.7
 // @description  Slither.io Bot
 // @author       Doug Woodgate
 // @match        http://slither.io/
