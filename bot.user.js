@@ -1502,7 +1502,7 @@ var bot = window.bot = (function (window) {
             }
 
             window.setAcceleration(bot.defaultAccel);
-            bot.changeHeadingRel( 3 * o * Math.PI / 32);
+            bot.changeHeadingRel( o * Math.PI / 32);
 
             if (canvas.circleIntersect(bot.headCircle, tailCircle)) {
                 bot.stage = 'circle';
