@@ -19,6 +19,7 @@ Key | Result
 ---|---
 T / Right Click | Bot enabled/disabled
 U | Log debugging
+C | Disable circle logic
 Y | Visual debugging
 I | Automatic Respawning
 O | **Mobile rendering - Try this if you experience lag**
