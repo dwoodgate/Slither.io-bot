@@ -9,7 +9,6 @@
     "indent" : [1, 4, {"SwitchCase" : 1}],
     "max-len": [1, 100],
     "space-before-function-paren": 1,
-    "linebreak-style" : [2, "unix"],
     "brace-style": [1, "1tbs", {"allowSingleLine": true}],
     "no-trailing-spaces": 1,
     "space-before-blocks": 1,

@@ -1,20 +1,20 @@
 /*
 The MIT License (MIT)
+ Copyright (c) 2018 Doug Woodgate <douglas.woodgate@gmail.com>
  Copyright (c) 2016 Jesse Miller <jmiller@jmiller.com>
  Copyright (c) 2016 Alexey Korepanov <kaikaikai@yandex.ru>
  Copyright (c) 2016 Ermiya Eskandary & Théophile Cailliau and other contributors
  https://jmiller.mit-license.org/
 */
 // ==UserScript==
-// @name         Slither.io Bot Championship Edition
-// @namespace    https://github.com/j-c-m/Slither.io-bot
-// @version      3.0.5
-// @description  Slither.io Bot Championship Edition
-// @author       Jesse Miller
+// @name         Slither.io Bot
+// @version      3.0.6
+// @description  Slither.io Bot
+// @author       Doug Woodgate
 // @match        http://slither.io/
-// @updateURL    https://github.com/j-c-m/Slither.io-bot/raw/master/bot.user.js
-// @downloadURL  https://github.com/j-c-m/Slither.io-bot/raw/master/bot.user.js
-// @supportURL   https://github.com/j-c-m/Slither.io-bot/issues
+// @updateURL    https://github.com/dwoodgate/Slither.io-bot/raw/master/bot.user.js
+// @downloadURL  https://github.com/dwoodgate/Slither.io-bot/raw/master/bot.user.js
+// @supportURL   https://github.com/dwoodgate/Slither.io-bot/issues
 // @grant        none
 // ==/UserScript==
 
@@ -400,6 +400,7 @@ var bot = window.bot = (function (window) {
     return {
         isBotRunning: false,
         isBotEnabled: true,
+        isCircleEnabled: true,
         stage: 'grow',
         collisionPoints: [],
         collisionAngles: [],
@@ -417,6 +418,9 @@ var bot = window.bot = (function (window) {
             arcSize: Math.PI / 8,
             // radius multiple for circle intersects
             radiusMult: 10,
+            radiusMultUi: 10,
+            // radius multiple for circle intersects on accel
+            foodAccelMult: 7,
             // food cluster size to trigger acceleration
             foodAccelSz: 200,
             // maximum angle of food to trigger acceleration
@@ -721,7 +725,7 @@ var bot = window.bot = (function (window) {
                             scPoint.xx,
                             scPoint.yy,
                             scPoint.radius),
-                            'red', false);
+                        'red', false);
                     }
 
                     scPoint = undefined;
@@ -746,7 +750,7 @@ var bot = window.bot = (function (window) {
                                     collisionPoint.xx,
                                     collisionPoint.yy,
                                     collisionPoint.radius),
-                                    '#00FF00', false);
+                                '#00FF00', false);
                             }
 
                             canvas.getDistance2FromSnake(collisionPoint);
@@ -893,7 +897,7 @@ var bot = window.bot = (function (window) {
                         window.snake.xx,
                         window.snake.yy,
                         bot.opt.radiusMult * bot.snakeRadius),
-                        'red', true, 0.2);
+                    'red', true, 0.2);
                 }
                 return true;
             }
@@ -907,7 +911,7 @@ var bot = window.bot = (function (window) {
                         window.snake.xx,
                         window.snake.yy,
                         bot.snakeRadius * bot.opt.enCircleDistanceMult),
-                        'yellow', true, 0.2);
+                    'yellow', true, 0.2);
                 }
                 return true;
             } else {
@@ -916,7 +920,7 @@ var bot = window.bot = (function (window) {
                         window.snake.xx,
                         window.snake.yy,
                         bot.snakeRadius * bot.opt.enCircleDistanceMult),
-                        'yellow');
+                    'yellow');
                 }
             }
 
@@ -1253,7 +1257,7 @@ var bot = window.bot = (function (window) {
                                 targetPoint.x, targetPoint.y),
                             canvas.getDistance2(enemyAhead.x, enemyAhead.y,
                                 targetPoint.x, targetPoint.y)
-                            );
+                        );
                     }
                     // bodies
                     let offsetSet = false;
@@ -1454,9 +1458,9 @@ var bot = window.bot = (function (window) {
 
             if (bot.foodAngles[0] !== undefined && bot.foodAngles[0].sz > 0) {
                 bot.currentFood = { x: bot.foodAngles[0].x,
-                                    y: bot.foodAngles[0].y,
-                                    sz: bot.foodAngles[0].sz,
-                                    da: bot.foodAngles[0].da };
+                    y: bot.foodAngles[0].y,
+                    sz: bot.foodAngles[0].sz,
+                    da: bot.foodAngles[0].da };
             } else {
                 bot.currentFood = { x: bot.MID_X, y: bot.MID_Y, sz: 0 };
             }
@@ -1467,7 +1471,7 @@ var bot = window.bot = (function (window) {
 
             if (bot.currentFood && bot.currentFood.sz > bot.opt.foodAccelSz) {
                 aIndex = bot.getAngleIndex(bot.currentFood.ang);
-
+                bot.opt.radiusMult = bot.opt.foodAccelMult;
                 if (
                     bot.collisionAngles[aIndex] && bot.collisionAngles[aIndex].distance >
                     bot.currentFood.distance + bot.snakeRadius * bot.opt.radiusMult
@@ -1480,7 +1484,7 @@ var bot = window.bot = (function (window) {
                     return 1;
                 }
             }
-
+            bot.opt.radiusMult = bot.opt.radiusMultUi;
             return bot.defaultAccel;
         },
 
@@ -1498,7 +1502,7 @@ var bot = window.bot = (function (window) {
             }
 
             window.setAcceleration(bot.defaultAccel);
-            bot.changeHeadingRel(o * Math.PI / 32);
+            bot.changeHeadingRel( 3 * o * Math.PI / 32);
 
             if (canvas.circleIntersect(bot.headCircle, tailCircle)) {
                 bot.stage = 'circle';
@@ -1572,15 +1576,16 @@ var bot = window.bot = (function (window) {
         go: function () {
             bot.every();
 
-            if (bot.snakeLength < bot.opt.followCircleLength) {
+            if (bot.snakeLength < bot.opt.followCircleLength || !bot.isCircleEnabled) {
                 bot.stage = 'grow';
+                window.setAcceleration(bot.foodAccel());
             }
 
             if (bot.currentFood && bot.stage !== 'grow') {
                 bot.currentFood = undefined;
             }
 
-            if (bot.stage === 'circle') {
+            if (bot.stage === 'circle' && bot.isCircleEnabled) {
                 window.setAcceleration(bot.defaultAccel);
                 bot.followCircleSelf();
             } else if (bot.checkCollision() || bot.checkEncircle()) {
@@ -1590,7 +1595,7 @@ var bot = window.bot = (function (window) {
                         bot.actionTimer, 1000 / bot.opt.targetFps * bot.opt.collisionDelay);
                 }
             } else {
-                if (bot.snakeLength > bot.opt.followCircleLength) {
+                if (bot.snakeLength > bot.opt.followCircleLength && bot.isCircleEnabled) {
                     bot.stage = 'tocircle';
                 }
                 if (bot.actionTimeout === undefined) {
@@ -1608,7 +1613,7 @@ var bot = window.bot = (function (window) {
                     bot.computeFoodGoal();
                     window.goalCoordinates = bot.currentFood;
                     canvas.setMouseCoordinates(canvas.mapToMouse(window.goalCoordinates));
-                } else if (bot.stage === 'tocircle') {
+                } else if (bot.stage === 'tocircle' && bot.isCircleEnabled) {
                     bot.toCircle();
                 }
             }
@@ -1852,6 +1857,10 @@ var userInterface = window.userInterface = (function (window, document) {
                 if (e.keyCode === 84) {
                     bot.isBotEnabled = !bot.isBotEnabled;
                 }
+                // Letter 'C' to quit to main menu
+                if (e.keyCode === 67) {
+                    bot.isCircleEnabled = !bot.isCircleEnabled;
+                }
                 // Letter 'U' to toggle debugging (console)
                 if (e.keyCode === 85) {
                     window.logDebugging = !window.logDebugging;
@@ -1884,17 +1893,19 @@ var userInterface = window.userInterface = (function (window, document) {
                 }
                 // Letter 'A' to increase collision detection radius
                 if (e.keyCode === 65) {
-                    bot.opt.radiusMult++;
+                    bot.opt.radiusMultUi++;
+                    bot.opt.radiusMult = bot.opt.radiusMultUi;
                     console.log(
-                        'radiusMult set to: ' + bot.opt.radiusMult);
+                        'radiusMult set to: ' + bot.opt.radiusMultUi);
                 }
                 // Letter 'S' to decrease collision detection radius
                 if (e.keyCode === 83) {
-                    if (bot.opt.radiusMult > 1) {
-                        bot.opt.radiusMult--;
+                    if (bot.opt.radiusMultUi > 1) {
+                        bot.opt.radiusMultUi--;
+                        bot.opt.radiusMult = bot.opt.radiusMultUi;
                         console.log(
                             'radiusMult set to: ' +
-                            bot.opt.radiusMult);
+                            bot.opt.radiusMultUi);
                     }
                 }
                 // Letter 'Z' to reset zoom
@@ -1985,6 +1996,7 @@ var userInterface = window.userInterface = (function (window, document) {
 
             oContent.push('version: ' + GM_info.script.version);
             oContent.push('[T] bot: ' + ht(bot.isBotEnabled));
+            oContent.push('[C] circle: ' + ht(bot.isCircleEnabled));
             oContent.push('[O] mobile rendering: ' + ht(window.mobileRender));
             oContent.push('[A/S] radius multiplier: ' + bot.opt.radiusMult);
             oContent.push('[I] auto respawn: ' + ht(window.autoRespawn));
