@@ -8,7 +8,7 @@ The MIT License (MIT)
 */
 // ==UserScript==
 // @name         Slither.io Bot
-// @version      3.0.7
+// @version      3.0.8
 // @description  Slither.io Bot
 // @author       Doug Woodgate
 // @match        http://slither.io/
@@ -712,7 +712,7 @@ var bot = window.bot = (function (window) {
                         xx: s.xx + Math.cos(s.ehang) * sRadius * sSpMult * bot.opt.radiusMult / 2,
                         yy: s.yy + Math.sin(s.ehang) * sRadius * sSpMult * bot.opt.radiusMult / 2,
                         snake: snake,
-                        radius: bot.headCircle.radius,
+                        radius: bot.opt.radiusMult / 2 * sRadius,
                         head: true
                     };
 
